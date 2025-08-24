@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Love Letter Decoder</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#111826;
+      --muted:#6b7280;
+      --text:#e5e7eb;
+      --accent:#7c3aed;
+      --accent-2:#22d3ee;
+      --ring: 0 0 0 2px color(display-p3 0.49 0.23 0.93 / .25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 80% -10%, #1b2233 0%, transparent 60%),
+        radial-gradient(1000px 700px at -10% 110%, #111a2c 0%, transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      line-height:1.5;
+    }
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:32px 20px 48px;
+    }
+    header{
+      display:flex;align-items:center;gap:14px;justify-content:center;margin:10px 0 28px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+      display:grid;place-items:center;box-shadow:0 10px 30px rgba(124,58,237,.35);
+      position:relative;overflow:hidden;
+    }
+    .logo svg{width:22px;height:22px;filter:drop-shadow(0 4px 10px rgba(34,211,238,.5))}
+    h1{font-size:clamp(22px,3.2vw,32px);margin:0;font-weight:700;letter-spacing:.2px}
+    p.sub{color:var(--muted);margin:6px 0 0;text-align:center}
+    .grid{
+      display:grid;grid-template-columns:1fr;gap:16px;margin-top:22px;
+    }
+    @media (min-width:900px){ .grid{ grid-template-columns:1fr 1fr; } }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+      border:1px solid rgba(124,58,237,.15);
+      border-radius:var(--radius);
+      box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
+      padding:14px;
+    }
+    label{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      color:var(--muted);font-size:.9rem;margin:6px 2px 10px;
+    }
+    .field{
+      position:relative;
+      border:1px solid rgba(124,58,237,.25);
+      border-radius:14px; overflow:hidden;
+      background:rgba(17,24,38,.7);
+    }
+    textarea{
+      width:100%;min-height:260px;max-height:60vh;resize:vertical;
+      background:transparent;border:0;color:var(--text);
+      padding:16px 16px 46px;font-size:1rem;line-height:1.6;outline:none;
+    }
+    .toolbar{
+      position:absolute;inset:auto 8px 8px 8px;
+      display:flex;gap:8px;justify-content:space-between;align-items:center;
+      pointer-events:none;
+    }
+    .toolbar .left, .toolbar .right{display:flex;gap:8px;pointer-events:auto}
+    .btn{
+      border:1px solid rgba(124,58,237,.35);
+      background:linear-gradient(180deg, rgba(124,58,237,.18), rgba(124,58,237,.05));
+      color:var(--text); padding:8px 12px; border-radius:12px; font-weight:600;
+      display:inline-flex;align-items:center;gap:8px; cursor:pointer;
+      transition:transform .08s ease, box-shadow .15s ease, background .2s ease;
+      box-shadow:0 6px 16px rgba(124,58,237,.18);
+      user-select:none; -webkit-user-select:none;
+    }
+    .btn:active{ transform:translateY(1px) }
+    .btn.secondary{ background:linear-gradient(180deg, rgba(34,211,238,.15), rgba(34,211,238,.04)); border-color:rgba(34,211,238,.35); box-shadow:0 6px 16px rgba(34,211,238,.18); }
+    .row{
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 2px 2px;
+    }
+    .switch{
+      display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);padding:6px;border-radius:12px;
+    }
+    .switch button{
+      border:0;background:transparent;color:var(--muted);padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer
+    }
+    .switch button.active{ color:var(--text); background:rgba(124,58,237,.18); box-shadow:var(--ring) }
+    .meta{color:var(--muted);font-size:.85rem}
+    footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.9rem}
+    code.map-pill{
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+      padding:6px 10px;border-radius:999px;color:#c7d2fe;
+    }
+    .hint{font-size:.9rem;color:var(--muted);margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>❤️ Love Letter Decoder ❤️</h1>
+      </div>
+    </header>
+
+    <div class="row">
+      <div class="switch" role="tablist" aria-label="Mode">
+        <button id="mode-decode" class="active" role="tab" aria-selected="true">Decode</button>
+        <button id="mode-encode" role="tab" aria-selected="false">Encode</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- INPUT -->
+      <section class="card">
+        <label for="input">
+          <span id="input-label">Encoded message</span>
+          <span class="meta" id="in-count">0 chars</span>
+        </label>
+        <div class="field">
+          <textarea id="input" placeholder="Paste or type here..."></textarea>
+          <div class="toolbar">
+            <div class="left">
+              <button class="btn" id="btn-clear" title="Clear">Clear</button>
+              <button class="btn secondary" id="btn-swap" title="Swap input/output">Swap</button>
+            </div>
+            <div class="right">
+              <button class="btn" id="btn-paste" title="Paste">Paste</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OUTPUT -->
+      <section class="card">
+        <label for="output">
+          <span id="output-label">Decoded result</span>
+          <span class="meta" id="out-count">0 chars</span>
+        </label>
+        <div class="field">
+          <textarea id="output" placeholder="Your result appears here..." readonly></textarea>
+          <div class="toolbar">
+            <div class="left">
+              <button class="btn" id="btn-copy" title="Copy">Copy</button>
+              <button class="btn secondary" id="btn-download" title="Download .txt">Download</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <small>Made for you kyanks ❤️</small>
+    </footer>
+  </div>
+
+  <script>
+    // === YOUR CUSTOM ALPHABET ===
+    // Decoder (cipher ➜ plain). From your decoder.json. 
+    const DECODER = {
+      "X":"A","G":"B","O":"C","R":"D","M":"E","Q":"F","H":"G","L":"H","U":"I","E":"J",
+      "T":"K","Z":"L","P":"M","A":"N","K":"O","B":"P","J":"Q","V":"R","W":"S","D":"T",
+      "N":"U","F":"V","S":"W","C":"X","I":"Y","Y":"Z"
+    };
+    // Encoder (plain ➜ cipher). From your encoder.json. 
+    const ENCODER = {
+      "A":"X","B":"G","C":"O","D":"R","E":"M","F":"Q","G":"H","H":"L","I":"U","J":"E",
+      "K":"T","L":"Z","M":"P","N":"A","O":"K","P":"B","Q":"J","R":"V","S":"W","T":"D",
+      "U":"N","V":"F","W":"S","X":"C","Y":"I","Z":"Y"
+    };
+
+    // --- UI elements
+    const input = document.getElementById('input');
+    const output = document.getElementById('output');
+    const inCount = document.getElementById('in-count');
+    const outCount = document.getElementById('out-count');
+    const modeDecodeBtn = document.getElementById('mode-decode');
+    const modeEncodeBtn = document.getElementById('mode-encode');
+    const mappingMeta = document.getElementById('mapping-meta');
+    const inputLabel = document.getElementById('input-label');
+    const outputLabel = document.getElementById('output-label');
+
+    const btnCopy = document.getElementById('btn-copy');
+    const btnClear = document.getElementById('btn-clear');
+    const btnSwap = document.getElementById('btn-swap');
+    const btnPaste = document.getElementById('btn-paste');
+    const btnDownload = document.getElementById('btn-download');
+
+    let mode = 'decode'; // 'decode' or 'encode'
+
+    function mapText(text, map){
+      // Preserve case, only transform A–Z letters
+      let res = '';
+      for (const ch of text){
+        const upper = ch.toUpperCase();
+        if (map[upper]){
+          const mapped = map[upper];
+          res += (ch === upper) ? mapped : mapped.toLowerCase();
+        } else {
+          res += ch;
+        }
+      }
+      return res;
+    }
+
+    function run(){
+      const val = input.value;
+      const map = mode === 'decode' ? DECODER : ENCODER;
+      output.value = mapText(val, map);
+      inCount.textContent = `${val.length} chars`;
+      outCount.textContent = `${output.value.length} chars`;
+    }
+
+    function setMode(next){
+      mode = next;
+      if (mode === 'decode'){
+        modeDecodeBtn.classList.add('active'); modeDecodeBtn.setAttribute('aria-selected','true');
+        modeEncodeBtn.classList.remove('active'); modeEncodeBtn.setAttribute('aria-selected','false');
+        inputLabel.textContent = 'Encoded message';
+        outputLabel.textContent = 'Decoded result';
+        mappingMeta.textContent = 'Using your custom alphabet mapping (cipher → plain).';
+      } else {
+        modeEncodeBtn.classList.add('active'); modeEncodeBtn.setAttribute('aria-selected','true');
+        modeDecodeBtn.classList.remove('active'); modeDecodeBtn.setAttribute('aria-selected','false');
+        inputLabel.textContent = 'Plain message';
+        outputLabel.textContent = 'Encoded result';
+        mappingMeta.textContent = 'Using your custom alphabet mapping (plain → cipher).';
+      }
+      run();
+    }
+
+    // --- Events
+    input.addEventListener('input', run);
+    modeDecodeBtn.addEventListener('click', ()=>setMode('decode'));
+    modeEncodeBtn.addEventListener('click', ()=>setMode('encode'));
+
+    btnCopy.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(output.value);
+        flash(btnCopy);
+      }catch(e){ /* ignore */ }
+    });
+
+    btnClear.addEventListener('click', ()=>{
+      input.value = ''; run(); flash(btnClear);
+    });
+
+    btnSwap.addEventListener('click', ()=>{
+      const tmp = input.value;
+      input.value = output.value;
+      output.value = tmp;
+      run();
+      flash(btnSwap);
+    });
+
+    btnPaste.addEventListener('click', async ()=>{
+      try{
+        const text = await navigator.clipboard.readText();
+        input.value = text; run(); flash(btnPaste);
+      }catch(e){ /* ignore */ }
+    });
+
+    btnDownload.addEventListener('click', ()=>{
+      const blob = new Blob([output.value], {type:'text/plain;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = mode==='decode' ? 'decoded.txt' : 'encoded.txt';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(a.href);
+      a.remove();
+      flash(btnDownload);
+    });
+
+    function flash(el){
+      const old = el.style.boxShadow;
+      el.style.boxShadow = '0 0 0 4px rgba(124,58,237,.3)';
+      setTimeout(()=> el.style.boxShadow = old, 150);
+    }
+
+    // Init
+    setMode('decode');
+    run();
+  </script>
+</body>
+</html>
